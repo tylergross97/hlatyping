@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Added`
 
-- Option to run HLA-HD for Class I and Class II HLA typing
+- [#201](https://github.com/nf-core/hlatyping/pull/201) Option to run HLA-HD for Class I and Class II HLA typing (@riederd)
 
 ## 2.1.0 - Patch Release - 2025-11-04
 
