@@ -99,7 +99,7 @@
             },
             "mentions": [
                 {
-                    "@id": "#4abdf54b-faaa-44ac-9988-2f5517c6de5a"
+                    "@id": "#c8d8e833-efe9-4a8e-bf8c-629d3b11fcb6"
                 }
             ],
             "name": "nf-core/hlatyping"
@@ -127,7 +127,7 @@
                 "ComputationalWorkflow"
             ],
             "dateCreated": "",
-            "dateModified": "2025-07-08T11:39:05Z",
+            "dateModified": "2025-11-20T09:32:03Z",
             "dct:conformsTo": "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/",
             "keywords": [
                 "nf-core",
@@ -170,14 +170,14 @@
             "url": {
                 "@id": "https://www.nextflow.io/"
             },
-            "version": "!>=24.10.5"
+            "version": "!>=25.04.0"
         },
         {
-            "@id": "#4abdf54b-faaa-44ac-9988-2f5517c6de5a",
+            "@id": "#c8d8e833-efe9-4a8e-bf8c-629d3b11fcb6",
             "@type": "TestSuite",
             "instance": [
                 {
-                    "@id": "#18eac653-685c-456b-ac13-999ab74b72e4"
+                    "@id": "#f4d14e57-053f-4702-8e9a-cddab6bbbf92"
                 }
             ],
             "mainEntity": {
@@ -186,7 +186,7 @@
             "name": "Test suite for nf-core/hlatyping"
         },
         {
-            "@id": "#18eac653-685c-456b-ac13-999ab74b72e4",
+            "@id": "#f4d14e57-053f-4702-8e9a-cddab6bbbf92",
             "@type": "TestInstance",
             "name": "GitHub Actions workflow for testing nf-core/hlatyping",
             "resource": "repos/nf-core/hlatyping/actions/workflows/nf-test.yml",
