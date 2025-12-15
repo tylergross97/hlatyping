@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Dependency | Old version | New version |
 | ---------- | ----------- | ----------- |
-| `MultiQC`  | 1.27.0      | 1.30.0      |
-| `nf-core`  | 3.2.0       | 3.3.2       |
+| `MultiQC`  | 1.27.0      | 1.33.0      |
+| `nf-core`  | 3.2.0       | 3.5.1       |
 
 ### `Added`
 

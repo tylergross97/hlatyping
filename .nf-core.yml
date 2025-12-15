@@ -1,4 +1,8 @@
-nf_core_version: 3.3.2
+nf_core_version: 3.5.1
+lint:
+  files_unchanged:
+    - docs/images/nf-core-hlatyping_logo_dark.png
+    - assets/nf-core-hlatyping_logo_light.png
 repository_type: pipeline
 template:
   author: Christopher Mohr, Alexander Peltzer, Sven Fillinger
@@ -8,9 +12,4 @@ template:
   name: hlatyping
   org: nf-core
   outdir: .
-  version: 2.1.0dev
-lint:
-  files_unchanged:
-    - .github/PULL_REQUEST_TEMPLATE.md
-    - assets/nf-core-hlatyping_logo_light.png
-    - docs/images/nf-core-hlatyping_logo_dark.png
+  version: 2.2.0dev
