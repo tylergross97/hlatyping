@@ -28,6 +28,10 @@
 
   > Szolek A, Schubert B, Mohr C, Sturm M, Feldhahn M, Kohlbacher O. OptiType: precision HLA typing from next-generation sequencing data. Bioinformatics. 2014 Dec 1;30(23):3310-6. doi: 10.1093/bioinformatics/btu548. Epub 2014 Aug 20. PMID: 25143287; PMCID: PMC4441069.
 
+- [HLA-HD](https://pubmed.ncbi.nlm.nih.gov/28419628/)
+
+> Kawaguchi S, Higasa K, Shimizu M, Yamada R, Matsuda F. HLA-HD: An accurate HLA typing algorithm for next-generation sequencing data. Hum Mutat. 2017 Jul;38(7):788-797. doi: 10.1002/humu.23230. Epub 2017 May 12. PMID: 28419628.
+
 - [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
 
   > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.

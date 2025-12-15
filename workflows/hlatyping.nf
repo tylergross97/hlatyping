@@ -15,6 +15,8 @@
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 include { CHECK_PAIRED                } from '../modules/local/check_paired'
+include { HLAHD_INSTALL               } from '../modules/local/hlahd/install'
+include { HLAHD                       } from '../modules/local/hlahd/genotype'
 
 include { paramsSummaryMultiqc        } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -53,8 +55,15 @@ workflow HLATYPING {
     ch_samplesheet // channel: samplesheet read in from --input
     main:
 
-    ch_versions = channel.empty()
-    ch_multiqc_files = channel.empty()
+    // Validate tools parameter
+    def tools = params.tools ?: 'optitype'
+    validate_tools_param(tools)
+
+    // HLAHD software metadata JSON file
+    hlahd_software_meta   = file("$projectDir/assets/hlahd_software_meta.json", checkIfExists: true)
+
+    ch_versions = Channel.empty()
+    ch_multiqc_files = Channel.empty()
 
     // Split by input type (bam/fastq)
     ch_samplesheet
@@ -108,12 +117,6 @@ workflow HLATYPING {
         .mix( ch_cat_fastq, ch_bam_fastq )
         .set{ ch_all_fastq }
 
-    ch_all_fastq
-        .map { meta, reads ->
-                [ meta, file("$projectDir/data/references/hla_reference_${meta['seq_type']}.fasta") ]
-        }
-        .set { ch_input_with_references }
-
     //
     // MODULE: Run FastQC
     //
@@ -123,54 +126,85 @@ workflow HLATYPING {
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
+    //
+    // Run modules for each selected tool
+    //
+    if ( "optitype" in tools.tokenize(",") )
+    {
 
-    //
-    // MODULE: Run Yara indexing on HLA reference
-    //
-    YARA_INDEX (
-        ch_input_with_references
-    )
-    ch_versions = ch_versions.mix(YARA_INDEX.out.versions)
+        ch_all_fastq
+            .map { meta, reads ->
+                    [ meta, file("$projectDir/data/references/hla_reference_${meta['seq_type']}.fasta") ]
+            }
+            .set { ch_input_with_references }
+
+        //
+        // MODULE: Run Yara indexing on HLA reference
+        //
+        YARA_INDEX (
+            ch_input_with_references
+        )
+        ch_versions = ch_versions.mix(YARA_INDEX.out.versions)
 
 
-    //
-    // Map sample-specific reads and index
-    //
-    ch_all_fastq
-        .cross(YARA_INDEX.out.index)
-        .multiMap { reads, index ->
-            reads: reads
-            index: index
+        //
+        // Map sample-specific reads and index
+        //
+        ch_all_fastq
+            .cross(YARA_INDEX.out.index)
+            .multiMap { reads, index ->
+                reads: reads
+                index: index
+            }
+            .set { ch_mapping_input }
+
+
+        //
+        // MODULE: Run Yara mapping
+        //
+        // Preparation Step - Pre-mapping against HLA
+        //
+        // In order to avoid the internal usage of RazerS from within OptiType when
+        // the input files are of type `fastq`, we perform a pre-mapping step
+        // here with the `yara` mapper, and map against the HLA reference only.
+        //
+        YARA_MAPPER (
+            ch_mapping_input.reads,
+            ch_mapping_input.index
+        )
+        ch_versions = ch_versions.mix(YARA_MAPPER.out.versions)
+
+        //
+        // MODULE: OptiType
+        //
+        OPTITYPE (
+            YARA_MAPPER.out.bam.join(YARA_MAPPER.out.bai)
+        )
+
+        ch_multiqc_files = ch_multiqc_files.mix(OPTITYPE.out.hla_type.collect{it[1]})
+        ch_multiqc_files = ch_multiqc_files.mix(OPTITYPE.out.coverage_plot.collect{it[1]})
+        ch_versions      = ch_versions.mix(OPTITYPE.out.versions)
+    }
+
+    if ( "hlahd" in tools.tokenize(",") )
+    {
+        //
+        // MODULE: Run HLAHD typing
+        //
+        if ( params.hlahd_path == null || ! file(params.hlahd_path).exists()) {
+            log.warn("The specified HLAHD package archive does not exist: ${params.hlahd_path}")
+            log.warn("Please download HLAHD from https://w3.genome.med.kyoto-u.ac.jp/HLA-HD/ and provide the path to the tarball via the '--hlahd_path' parameter.")
+            log.warn("Skipping HLAHD typing")
+        } else {
+            HLAHD_INSTALL (
+                parse_hlahd_software_meta(hlahd_software_meta)
+            )
+            HLAHD(
+                ch_all_fastq.combine(HLAHD_INSTALL.out.hlahd)
+            )
+            ch_versions = ch_versions.mix(HLAHD.out.versions)
         }
-        .set { ch_mapping_input }
-
-
-    //
-    // MODULE: Run Yara mapping
-    //
-    // Preparation Step - Pre-mapping against HLA
-    //
-    // In order to avoid the internal usage of RazerS from within OptiType when
-    // the input files are of type `fastq`, we perform a pre-mapping step
-    // here with the `yara` mapper, and map against the HLA reference only.
-    //
-    YARA_MAPPER (
-        ch_mapping_input.reads,
-        ch_mapping_input.index
-    )
-    ch_versions = ch_versions.mix(YARA_MAPPER.out.versions)
-
-
-    //
-    // MODULE: OptiType
-    //
-    OPTITYPE (
-        YARA_MAPPER.out.bam.join(YARA_MAPPER.out.bai)
-    )
-    ch_multiqc_files = ch_multiqc_files.mix(OPTITYPE.out.hla_type.collect{it[1]})
-    ch_multiqc_files = ch_multiqc_files.mix(OPTITYPE.out.coverage_plot.collect{it[1]})
-    ch_versions      = ch_versions.mix(OPTITYPE.out.versions)
-
+    }
 
     //
     // Collate and save software versions
@@ -245,6 +279,41 @@ workflow HLATYPING {
     emit:multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 
+}
+
+
+//
+// Auxiliary functions
+//
+
+// Check if supported tools are specified
+def validate_tools_param(tools) {
+    valid_tools = [ 'optitype', 'hlahd' ]
+    tool_list = tools.tokenize(',')
+    // Validate each tool in tools if it's in valid_tools
+    def invalid_tools = tool_list.findAll { it.trim() !in valid_tools }
+    if (invalid_tools) {
+        throw new IllegalArgumentException("Invalid tools found: ${invalid_tools.join(',')}.\nValid tools: ${valid_tools.join(',')}")
+    }
+}
+
+// Parse hlahd software metadata JSON file and create channel for installation
+def parse_hlahd_software_meta(hlahd_software_meta) {
+    // Import mandatory hlahd metadata
+    def jsonSlurper = new groovy.json.JsonSlurper()
+    def hlahd_software_meta_map = jsonSlurper.parse(hlahd_software_meta)
+    def entry = hlahd_software_meta_map['hlahd']
+
+    // Add the tool name and user installation path to the hlahd install channel
+    ch_hlahd_exe = Channel.empty()
+    ch_hlahd_exe.bind([
+        'hlahd',
+        entry.version,
+        entry.software_md5,
+        file(params.hlahd_path, checkIfExists:true),
+        params.hlahd_update_reference_dict,
+    ])
+    return ch_hlahd_exe
 }
 
 /*

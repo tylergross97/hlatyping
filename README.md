@@ -34,7 +34,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
 2. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 3. Generate reference indices ([`yara`](https://www.seqan.de/apps/yara.html))
 4. Map reads to reference ([`yara`](https://www.seqan.de/apps/yara.html))
-5. Run HLA typing ([`OptiType`](https://github.com/FRED-2/OptiType))
+5. Run HLA class I typing ([`OptiType`](https://github.com/FRED-2/OptiType)) and optional HLA class I+II ([`HLA-HD`](https://w3.genome.med.kyoto-u.ac.jp/HLA-HD/), requires local installation of HLA-HD)
 6. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
 ## Usage
