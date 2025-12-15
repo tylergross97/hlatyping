@@ -38,6 +38,20 @@
                 }
             }
         },
+        "hlatyping_options": {
+            "title": "HLA typing options",
+            "type": "object",
+            "description": "Options for the HLA typing step.",
+            "fa_icon": "fas fa-chart-bar",
+            "properties": {
+                "tools": {
+                    "type": "string",
+                    "default": "optitype",
+                    "help_text": "Specifies the tool(s) to use. Multiple tools can be combined in a list separated by comma.\nAvailable are: `optitype`, `hlahd`.",
+                    "description": "Specifies the hlatyping tool(s) to use."
+                }
+            }
+        },
         "optitype_optimisation_steps": {
             "title": "OptiType Optimisation steps",
             "type": "object",
@@ -70,6 +84,29 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
+                }
+            }
+        },
+        "hlahd_options": {
+            "title": "HLA-HD options",
+            "type": "object",
+            "description": "Options for running HLA-HD for class II HLA typing.",
+            "default": "",
+            "fa_icon": "fas fa-cog",
+            "properties": {
+                "hlahd_path": {
+                    "type": "string",
+                    "default": null,
+                    "fa_icon": "fas fa-file-zip-o",
+                    "description": "Tarball file location of HLA-HD software distribution.",
+                    "help_text": "Path to the installation tarball of HLA-HD. You need to provide this tarball to run HLA-HD. Obtain a licensed copy from https://w3.genome.med.kyoto-u.ac.jp/HLA-HD/"
+                },
+                "hlahd_update_reference_dict": {
+                    "type": "boolean",
+                    "default": false,
+                    "fa_icon": "fas fa-check",
+                    "description": "Update HLA-HD reference dictionary to the latest version before running HLA-HD.",
+                    "help_text": "By default, the HLA-HD reference dictionary is not updated. To update the dictionary to the latest version from the IGMT/HLA database, set this parameter to `true`. Note that an internet connection is required for updating the dictionary from https://github.com/ANHIG/IMGTHLA/raw/refs/heads/Latest/hla.dat.zip"
                 }
             }
         },
@@ -266,7 +303,13 @@
             "$ref": "#/$defs/input_output_options"
         },
         {
+            "$ref": "#/$defs/hlatyping_options"
+        },
+        {
             "$ref": "#/$defs/optitype_optimisation_steps"
+        },
+        {
+            "$ref": "#/$defs/hlahd_options"
         },
         {
             "$ref": "#/$defs/reference_genome_options"
