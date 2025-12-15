@@ -60,20 +60,20 @@ jobs:
         run: |
           # Download encrypted HLA-HD tarball from test-datasets
           curl -L -o hlahd.1.7.1.tar.gz.gpg https://raw.githubusercontent.com/nf-core/test-datasets/hlatyping/software/hlahd.1.7.1.tar.gz.gpg
-          
+
           # Decrypt the tarball using GPG with the passphrase from secrets
           gpg --batch --yes --pinentry-mode=loopback --passphrase "${{ secrets.GPG_PASSPHRASE }}" --output ${GITHUB_WORKSPACE}/hlahd.1.7.1.tar.gz --decrypt hlahd.1.7.1.tar.gz.gpg
-          
+
           # Verify the file was created
           ls -lh ${GITHUB_WORKSPACE}/hlahd.1.7.1.tar.gz
-          
+
           # Create a custom config file to override the hlahd_path parameter
           cat > ${GITHUB_WORKSPACE}/hlahd_ci.config <<EOF
           params {
               hlahd_path = '${GITHUB_WORKSPACE}/hlahd.1.7.1.tar.gz'
           }
           EOF
-          
+
           cat ${GITHUB_WORKSPACE}/hlahd_ci.config
 
       - name: Setup Nextflow
@@ -125,7 +125,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Status | Test Name | Profile | NXF Version |" >> $GITHUB_STEP_SUMMARY
           echo "|:------:|-----------|---------|-------------|" >> $GITHUB_STEP_SUMMARY
-          
+
           # Process hlahd test results
           if [ -f test_hlahd.tap ]; then
             while IFS= read -r line; do
@@ -140,7 +140,7 @@ jobs:
               fi
             done < test_hlahd.tap
           fi
-          
+
           # Process optitype_hlahd test results
           if [ -f test_optitype_hlahd.tap ]; then
             while IFS= read -r line; do
