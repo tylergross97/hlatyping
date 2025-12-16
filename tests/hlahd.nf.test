@@ -2,9 +2,9 @@ nextflow_pipeline {
 
     name "Test pipeline"
     script "../main.nf"
-    tag "pipeline"
+    tag "hlahd"
 
-    test("-profile test_optitype_hlahd") {
+    test("-profile test_hlahd") {
 
         when {
             params {
