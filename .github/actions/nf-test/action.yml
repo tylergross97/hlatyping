@@ -63,7 +63,7 @@ runs:
       run: |
         nf-test test \
           --profile=+${{ inputs.profile }} \
-          --tag pipeline \
+          $(if [ -n "${{ inputs.tags }}" ]; then echo "--tag ${{ inputs.tags }}"; else echo "--tag default"; fi) \
           --ci \
           --changed-since HEAD^ \
           --verbose \
