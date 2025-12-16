@@ -16,10 +16,6 @@ inputs:
   tags:
     description: "Tags to pass as argument for nf-test --tag parameter"
     required: false
-  hlahd_tests:
-    description: "Whether to run HLA-HD tests"
-    required: false
-    default: "false"
 runs:
   using: "composite"
   steps:
@@ -72,13 +68,14 @@ runs:
           --changed-since HEAD^ \
           --verbose \
           --tap=test.tap \
-          --shard ${{ inputs.shard }}/${{ inputs.total_shards }}
+          --shard ${{ inputs.shard }}/${{ inputs.total_shards }} \
+          --exclude tests/hlahd/**
 
           # Save the absolute path of the test.tap file to the output
           echo "tap_file_path=$(realpath test.tap)" >> $GITHUB_OUTPUT
 
     - name: Download and decrypt HLA-HD
-      if: inputs.hlahd_tests == 'true' && (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
+      if: (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
       shell: bash
       env:
         GPG_PASSPHRASE: ${{ env.GPG_PASSPHRASE }}
@@ -102,26 +99,26 @@ runs:
         cat ${GITHUB_WORKSPACE}/hlahd_ci.config
 
     - name: Run nf-test for hlahd profile
-      if: inputs.hlahd_tests == 'true' && (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
+      if: (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
       shell: bash
       env:
         NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
       run: |
         nf-test test \
-          tests/hlahd.nf.test \
+          tests/hlahd/hlahd.nf.test \
           --profile=+${{ inputs.profile }} \
           --verbose \
           --tap=test_hlahd.tap \
           -c ${GITHUB_WORKSPACE}/hlahd_ci.config
 
     - name: Run nf-test for optitype_hlahd profile
-      if: inputs.hlahd_tests == 'true' && (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
+      if: (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
       shell: bash
       env:
         NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
       run: |
         nf-test test \
-          tests/optitype_hlahd.nf.test \
+          tests/hlahd/optitype_hlahd.nf.test \
           --profile=+${{ inputs.profile }} \
           --verbose \
           --tap=test_optitype_hlahd.tap \
