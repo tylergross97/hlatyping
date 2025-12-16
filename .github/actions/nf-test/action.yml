@@ -78,7 +78,7 @@ runs:
           echo "tap_file_path=$(realpath test.tap)" >> $GITHUB_OUTPUT
 
     - name: Download and decrypt HLA-HD
-      if: inputs.hlahd_tests == 'true'
+      if: inputs.hlahd_tests == 'true' && (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
       shell: bash
       env:
         GPG_PASSPHRASE: ${{ env.GPG_PASSPHRASE }}
@@ -102,7 +102,7 @@ runs:
         cat ${GITHUB_WORKSPACE}/hlahd_ci.config
 
     - name: Run nf-test for hlahd profile
-      if: inputs.hlahd_tests == 'true'
+      if: inputs.hlahd_tests == 'true' && (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
       shell: bash
       env:
         NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
@@ -115,7 +115,7 @@ runs:
           -c ${GITHUB_WORKSPACE}/hlahd_ci.config
 
     - name: Run nf-test for optitype_hlahd profile
-      if: inputs.hlahd_tests == 'true'
+      if: inputs.hlahd_tests == 'true' && (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
       shell: bash
       env:
         NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
