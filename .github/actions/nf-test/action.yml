@@ -76,8 +76,6 @@ runs:
     - name: Download and decrypt HLA-HD
       if: (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
       shell: bash
-      env:
-        GPG_PASSPHRASE: ${{ env.GPG_PASSPHRASE }}
       run: |
         # Download encrypted HLA-HD tarball from test-datasets
         curl -L -o hlahd.1.7.1.tar.gz.gpg https://raw.githubusercontent.com/nf-core/test-datasets/hlatyping/software/hlahd.1.7.1.tar.gz.gpg
