@@ -4,6 +4,7 @@ nextflow_pipeline {
     script "../main.nf"
 
     test("-profile test_dna_rna") {
+        tag "pipeline"
         tag "default"
 
         when {

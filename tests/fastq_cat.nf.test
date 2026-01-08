@@ -4,6 +4,7 @@ nextflow_pipeline {
     script "../main.nf"
 
     test("-profile test_fastq_cat") {
+        tag "pipeline"
         tag "default"
 
         when {

@@ -4,6 +4,7 @@ nextflow_pipeline {
     script "../main.nf"
 
     test("-profile test_optitype_hlahd") {
+        tag "pipeline"
         tag "hlahd"
 
         when {

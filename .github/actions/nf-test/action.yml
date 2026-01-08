@@ -83,7 +83,7 @@ runs:
         curl -L -o hlahd.1.7.1.tar.gz.gpg https://raw.githubusercontent.com/nf-core/test-datasets/hlatyping/software/hlahd.1.7.1.tar.gz.gpg
 
         # Decrypt the tarball using GPG with the passphrase from secrets
-        gpg --batch --yes --pinentry-mode=loopback --passphrase "$GPG_PASSPHRASE" --output ${GITHUB_WORKSPACE}/hlahd.1.7.1.tar.gz --decrypt hlahd.1.7.1.tar.gz.gpg
+        gpg --batch --yes --passphrase "${{ secrets.GPG_PASSPHRASE }}" -d hlahd.1.7.1.tar.gz.gpg > ${GITHUB_WORKSPACE}/hlahd.1.7.1.tar.gz
 
         # Verify the file was created
         ls -lh ${GITHUB_WORKSPACE}/hlahd.1.7.1.tar.gz
