@@ -63,7 +63,7 @@ runs:
       run: |
         nf-test test \
           --profile=+${{ inputs.profile }} \
-          --tag default \
+          $(if [ -n "${{ inputs.tags }}" ]; then echo "--tag ${{ inputs.tags }}"; fi) \
           --ci \
           --changed-since HEAD^ \
           --verbose \
@@ -72,41 +72,6 @@ runs:
 
           # Save the absolute path of the test.tap file to the output
           echo "tap_file_path=$(realpath test.tap)" >> $GITHUB_OUTPUT
-
-    - name: Download and decrypt HLA-HD
-      if: (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
-      shell: bash
-      run: |
-        # Download encrypted HLA-HD tarball from test-datasets
-        curl -L -o hlahd.1.7.1.tar.gz.gpg https://raw.githubusercontent.com/nf-core/test-datasets/hlatyping/software/hlahd.1.7.1.tar.gz.gpg
-
-        # Decrypt the tarball using GPG with the passphrase from secrets
-        gpg --batch --yes --passphrase "${{ secrets.GPG_PASSPHRASE }}" -d hlahd.1.7.1.tar.gz.gpg > ${GITHUB_WORKSPACE}/hlahd.1.7.1.tar.gz
-
-        # Verify the file was created
-        ls -lh ${GITHUB_WORKSPACE}/hlahd.1.7.1.tar.gz
-
-        # Create a custom config file to override the hlahd_path parameter
-        cat > ${GITHUB_WORKSPACE}/hlahd_ci.config <<EOF
-        params {
-            hlahd_path = '${GITHUB_WORKSPACE}/hlahd.1.7.1.tar.gz'
-        }
-        EOF
-
-        cat ${GITHUB_WORKSPACE}/hlahd_ci.config
-
-    - name: Run nf-test for HLA-HD tests
-      if: (( github.event_name == 'push' && github.repository == 'nf-core/hlatyping' ) || github.event.pull_request.head.repo.full_name == 'nf-core/hlatyping')
-      shell: bash
-      env:
-        NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
-      run: |
-        nf-test test \
-          --tag hlahd \
-          --profile=+${{ inputs.profile }} \
-          --verbose \
-          --tap=test_hlahd.tap \
-          -c ${GITHUB_WORKSPACE}/hlahd_ci.config
 
     - name: Generate test summary
       if: always()
@@ -137,21 +102,6 @@ runs:
           done < test.tap
         else
           echo "| ⚠️ | No test results found | ${{ inputs.profile }} | ${{ inputs.shard }}/${{ inputs.total_shards }} |" >> $GITHUB_STEP_SUMMARY
-        fi
-
-        # Process HLA-HD test results if they exist
-        if [ -f test_hlahd.tap ]; then
-          while IFS= read -r line; do
-            if [[ $line =~ ^ok ]]; then
-              test_name="${line#ok }"
-              test_name="${test_name#* }"
-              echo "| ✅ | ${test_name} | ${{ inputs.profile }} | HLA-HD |" >> $GITHUB_STEP_SUMMARY
-            elif [[ $line =~ ^not\ ok ]]; then
-              test_name="${line#not ok }"
-              test_name="${test_name#* }"
-              echo "| ❌ | ${test_name} | ${{ inputs.profile }} | HLA-HD |" >> $GITHUB_STEP_SUMMARY
-            fi
-          done < test_hlahd.tap
         fi
 
     - name: Clean up
