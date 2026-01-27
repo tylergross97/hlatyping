@@ -3,6 +3,7 @@ nextflow_pipeline {
     name "Test pipeline"
     script "../main.nf"
     tag "hlahd"
+    profile "test_optitype_hlahd"
 
     test("-profile test_optitype_hlahd") {
 
