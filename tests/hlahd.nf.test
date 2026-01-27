@@ -1,8 +1,8 @@
 nextflow_pipeline {
 
-    name "Test pipeline"
+    name "Test pipeline with HLA-HD"
     script "../main.nf"
-    tag "pipeline"
+    tag "hlahd"
 
     test("-profile test_hlahd") {
 
