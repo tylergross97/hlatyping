@@ -12,4 +12,4 @@ template:
   name: hlatyping
   org: nf-core
   outdir: .
-  version: 2.2.0dev
+  version: 2.2.0
