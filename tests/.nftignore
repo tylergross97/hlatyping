@@ -7,7 +7,7 @@ multiqc/multiqc_data/*.txt
 multiqc/multiqc_plots/{svg,pdf,png}/*.{svg,pdf,png}
 multiqc/multiqc_report.html
 fastqc/*_fastqc.{html,zip}
-optitype/SAMPLE_PAIRED_END_BAM/*
-hlahd/*/*.{bam,bai,pdf}
-yara/SAMPLE_PAIRED_END_BAM/*.{bam,bai}
+optitype/**/*
+hlahd/**/*.{bam,bai,pdf,tsv}
+yara/**/*.{bam,bai}
 pipeline_info/*.{html,json,txt,yml}

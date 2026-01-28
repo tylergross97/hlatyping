@@ -1474,19 +1474,7 @@
                 "split_PM_reads.cpp:md5,5b50d52dd1a2e1c525f47cc2d670f6ec",
                 "split_shell.cpp:md5,9ecf85870bff57eb22d04a50b11be2bc",
                 "update.dictionary.sh:md5,f885ef234cc3999f18d80b93d78d8b40",
-                "SAMPLE_FASTQ_coverage_plot.pdf:md5,3c021989fca28c8cdbb8b13e3385593a",
-                "SAMPLE_FASTQ_result.tsv:md5,5b2d6047f7bdceb71a003cb23ff11dcc",
-                "SAMPLE_FASTQ_RNA_coverage_plot.pdf:md5,f5bc977f0f8f9687fa5b6196037c64c8",
-                "SAMPLE_FASTQ_RNA_result.tsv:md5,28ef8bdf597ff92715ecc464747b11f5",
-                "SAMPLE_FASTQ_1.mapped.bam:md5,bc36efa14e10213a0353f64b1b332564",
-                "SAMPLE_FASTQ_1.mapped.bam.bai:md5,39060e428e4842829634935357aaea91",
-                "SAMPLE_FASTQ_2.mapped.bam:md5,b1c20de976116414a70d2df4e5f6b224",
-                "SAMPLE_FASTQ_2.mapped.bam.bai:md5,710cf6ad826f62ccb0bcc3e5f3befbe7",
                 "versions.yml:md5,3d67d5a34bf0044c6567763154ac1719",
-                "SAMPLE_FASTQ_RNA_1.mapped.bam:md5,955a6a24c099f2685bc99214f9e01fe8",
-                "SAMPLE_FASTQ_RNA_1.mapped.bam.bai:md5,a68ba74f017eba88f6b02214bb0f5bae",
-                "SAMPLE_FASTQ_RNA_2.mapped.bam:md5,e6e8ede75712b091836bb38a9118008a",
-                "SAMPLE_FASTQ_RNA_2.mapped.bam.bai:md5,1a1edf59043ea8051905028da8f62223",
                 "versions.yml:md5,3d67d5a34bf0044c6567763154ac1719",
                 "hla_reference_dna.fasta.lf.drp:md5,28d863bdb814bccb8212a7b451e2af0a",
                 "hla_reference_dna.fasta.lf.drs:md5,8666683506aacd900bbd5a74ac4edf68",
@@ -1518,6 +1506,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-01-28T07:19:16.325975956"
+        "timestamp": "2026-01-28T08:09:00.988105475"
     }
 }
