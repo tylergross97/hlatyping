@@ -10,7 +10,7 @@
                     "hlahd": "1.7.1"
                 },
                 "Workflow": {
-                    "nf-core/hlatyping": "v2.2.0dev"
+                    "nf-core/hlatyping": "v2.2.0"
                 }
             },
             [

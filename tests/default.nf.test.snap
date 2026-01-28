@@ -15,7 +15,7 @@
                     "samtools": 1.21
                 },
                 "Workflow": {
-                    "nf-core/hlatyping": "v2.2.0dev"
+                    "nf-core/hlatyping": "v2.2.0"
                 },
                 "YARA_INDEX": {
                     "yara": "1.0.2"
