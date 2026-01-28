@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Added`
 
 - [#201](https://github.com/nf-core/hlatyping/pull/201) - Option to run HLA-HD (v1.7.1) for Class I and Class II HLA typing (@riederd)
-- [#204](https://github.com/nf-core/hlatyping/pull/204) - CI tests for HLA-HD using encrypted licensed software, following nf-core external tool pattern (@riederd)
+- [#204](https://github.com/nf-core/hlatyping/pull/204) - CI tests for HLA-HD using encrypted licensed software, following nf-core external tool pattern (@jonasscheid)
 
 ### `Dependencies`
 
