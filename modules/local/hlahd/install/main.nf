@@ -6,14 +6,12 @@ process HLAHD_INSTALL {
         ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/7e/7e050dc8ccc26b39fe2080e2b8d702b13851d260a702609b8941b57bafd84468/data'
         : 'community.wave.seqera.io/library/bowtie2_gcc_gxx_wget:8ae2b876647fef02'}"
 
-
     input:
     tuple val(toolname), val(toolversion), val(toolchecksum), path(tooltarball), val(update_dict)
 
     output:
     path "${toolname}/${toolversion}", emit: hlahd
     path "versions.yml", emit: versions
-
 
     when:
     task.ext.when == null || task.ext.when
@@ -44,7 +42,6 @@ process HLAHD_INSTALL {
     fi
 
     cd ../../
-
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

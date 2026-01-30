@@ -18,10 +18,6 @@ process HLAHD {
     task.ext.when == null || task.ext.when
 
     script:
-    if(hlahd_directory && !hlahd_directory.exists()) {
-        error "The specified HLAHD directory does not exist: ${hlahd_directory}"
-    }
-
     def hlahd_p = hlahd_directory ? "${hlahd_directory}/bin" : ''
     def freq_data = hlahd_directory ? "${hlahd_directory}/freq_data" : ''
     def split_file = hlahd_directory ? "${hlahd_directory}/HLA_gene.split.3.50.0.txt" : ''
