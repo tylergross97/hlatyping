@@ -129,8 +129,7 @@ workflow HLATYPING {
     //
     // Run modules for each selected tool
     //
-    if ( "optitype" in tools.tokenize(",") )
-    {
+    if ( "optitype" in tools.tokenize(",") ) {
 
         ch_all_fastq
             .map { meta, reads ->
@@ -186,8 +185,7 @@ workflow HLATYPING {
         ch_versions      = ch_versions.mix(OPTITYPE.out.versions)
     }
 
-    if ( "hlahd" in tools.tokenize(",") )
-    {
+    if ( "hlahd" in tools.tokenize(",") ) {
         //
         // MODULE: Run HLAHD typing
         //
