@@ -189,6 +189,34 @@ workflow PIPELINE_COMPLETION {
 //
 def validateInputParameters() {
     genomeExistsError()
+    validateToolsParam()
+    validateHlahdPath()
+}
+
+//
+// Validate tools parameter contains only supported tools
+//
+def validateToolsParam() {
+    def tools = params.tools ?: 'optitype'
+    def valid_tools = [ 'optitype', 'hlahd' ]
+    def tool_list = tools.tokenize(',')
+    def invalid_tools = tool_list.findAll { it.trim() !in valid_tools }
+    if (invalid_tools) {
+        error("Invalid tools found: ${invalid_tools.join(',')}.\nValid tools: ${valid_tools.join(',')}")
+    }
+}
+
+//
+// Validate hlahd_path is provided when hlahd tool is selected
+//
+def validateHlahdPath() {
+    def tools = params.tools ?: 'optitype'
+    if ("hlahd" in tools.tokenize(",")) {
+        if (params.hlahd_path == null || !file(params.hlahd_path).exists()) {
+            error("HLA-HD tool selected but hlahd_path is not set or does not exist: ${params.hlahd_path}\n" +
+                  "Please download HLA-HD from https://w3.genome.med.kyoto-u.ac.jp/HLA-HD/ and provide the path to the tarball via the '--hlahd_path' parameter.")
+        }
+    }
 }
 
 //

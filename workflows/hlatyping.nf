@@ -55,12 +55,7 @@ workflow HLATYPING {
     ch_samplesheet // channel: samplesheet read in from --input
     main:
 
-    // Validate tools parameter
     def tools = params.tools ?: 'optitype'
-    validate_tools_param(tools)
-
-    // HLAHD software metadata JSON file
-    hlahd_software_meta   = file("$projectDir/assets/hlahd_software_meta.json", checkIfExists: true)
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
@@ -189,19 +184,21 @@ workflow HLATYPING {
         //
         // MODULE: Run HLAHD typing
         //
-        if ( params.hlahd_path == null || ! file(params.hlahd_path).exists()) {
-            log.warn("The specified HLAHD package archive does not exist: ${params.hlahd_path}")
-            log.warn("Please download HLAHD from https://w3.genome.med.kyoto-u.ac.jp/HLA-HD/ and provide the path to the tarball via the '--hlahd_path' parameter.")
-            log.warn("Skipping HLAHD typing")
-        } else {
-            HLAHD_INSTALL (
-                parse_hlahd_software_meta(hlahd_software_meta)
-            )
-            HLAHD(
-                ch_all_fastq.combine(HLAHD_INSTALL.out.hlahd)
-            )
-            ch_versions = ch_versions.mix(HLAHD.out.versions)
-        }
+        // Parse HLA-HD software metadata and create installation channel
+        def hlahd_software_meta = file("$projectDir/assets/hlahd_software_meta.json", checkIfExists: true)
+        def jsonSlurper = new groovy.json.JsonSlurper()
+        def hlahd_meta = jsonSlurper.parse(hlahd_software_meta)['hlahd']
+        def ch_hlahd_install = Channel.of([
+            'hlahd',
+            hlahd_meta.version,
+            hlahd_meta.software_md5,
+            file(params.hlahd_path, checkIfExists: true),
+            params.hlahd_update_reference_dict,
+        ])
+
+        HLAHD_INSTALL(ch_hlahd_install)
+        HLAHD(ch_all_fastq.combine(HLAHD_INSTALL.out.hlahd))
+        ch_versions = ch_versions.mix(HLAHD.out.versions)
     }
 
     //
@@ -277,41 +274,6 @@ workflow HLATYPING {
     emit:multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 
-}
-
-
-//
-// Auxiliary functions
-//
-
-// Check if supported tools are specified
-def validate_tools_param(tools) {
-    valid_tools = [ 'optitype', 'hlahd' ]
-    tool_list = tools.tokenize(',')
-    // Validate each tool in tools if it's in valid_tools
-    def invalid_tools = tool_list.findAll { it.trim() !in valid_tools }
-    if (invalid_tools) {
-        throw new IllegalArgumentException("Invalid tools found: ${invalid_tools.join(',')}.\nValid tools: ${valid_tools.join(',')}")
-    }
-}
-
-// Parse hlahd software metadata JSON file and create channel for installation
-def parse_hlahd_software_meta(hlahd_software_meta) {
-    // Import mandatory hlahd metadata
-    def jsonSlurper = new groovy.json.JsonSlurper()
-    def hlahd_software_meta_map = jsonSlurper.parse(hlahd_software_meta)
-    def entry = hlahd_software_meta_map['hlahd']
-
-    // Add the tool name and user installation path to the hlahd install channel
-    ch_hlahd_exe = Channel.empty()
-    ch_hlahd_exe.bind([
-        'hlahd',
-        entry.version,
-        entry.software_md5,
-        file(params.hlahd_path, checkIfExists:true),
-        params.hlahd_update_reference_dict,
-    ])
-    return ch_hlahd_exe
 }
 
 /*
