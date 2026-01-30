@@ -1,19 +1,13 @@
 {
     "-profile test_fastq": {
         "content": [
-            7,
+            5,
             {
-                "CHECK_PAIRED": {
-                    "samtools": "1.16.1"
-                },
                 "FASTQC": {
                     "fastqc": "0.12.1"
                 },
                 "OPTITYPE": {
                     "optitype": "1.3.1"
-                },
-                "SAMTOOLS_COLLATEFASTQ": {
-                    "samtools": 1.21
                 },
                 "Workflow": {
                     "nf-core/hlatyping": "v2.2.0"
@@ -27,14 +21,11 @@
                 }
             },
             [
-                "check",
-                "check/example_pe.bam",
-                "check/is_singleend.txt",
                 "fastqc",
-                "fastqc/SAMPLE_PAIRED_END_BAM_1_fastqc.html",
-                "fastqc/SAMPLE_PAIRED_END_BAM_1_fastqc.zip",
-                "fastqc/SAMPLE_PAIRED_END_BAM_2_fastqc.html",
-                "fastqc/SAMPLE_PAIRED_END_BAM_2_fastqc.zip",
+                "fastqc/SAMPLE_PAIRED_END_1_fastqc.html",
+                "fastqc/SAMPLE_PAIRED_END_1_fastqc.zip",
+                "fastqc/SAMPLE_PAIRED_END_2_fastqc.html",
+                "fastqc/SAMPLE_PAIRED_END_2_fastqc.zip",
                 "multiqc",
                 "multiqc/multiqc_data",
                 "multiqc/multiqc_data/fastqc-status-check-heatmap.txt",
@@ -93,23 +84,18 @@
                 "multiqc/multiqc_plots/svg/optitype_summary_plot.svg",
                 "multiqc/multiqc_report.html",
                 "optitype",
-                "optitype/SAMPLE_PAIRED_END_BAM",
-                "optitype/SAMPLE_PAIRED_END_BAM/SAMPLE_PAIRED_END_BAM_coverage_plot.pdf",
-                "optitype/SAMPLE_PAIRED_END_BAM/SAMPLE_PAIRED_END_BAM_result.tsv",
+                "optitype/SAMPLE_PAIRED_END",
+                "optitype/SAMPLE_PAIRED_END/SAMPLE_PAIRED_END_coverage_plot.pdf",
+                "optitype/SAMPLE_PAIRED_END/SAMPLE_PAIRED_END_result.tsv",
                 "pipeline_info",
                 "pipeline_info/nf_core_hlatyping_software_mqc_versions.yml",
-                "samtools",
-                "samtools/SAMPLE_PAIRED_END_BAM_1.fq.gz",
-                "samtools/SAMPLE_PAIRED_END_BAM_2.fq.gz",
-                "samtools/SAMPLE_PAIRED_END_BAM_other.fq.gz",
-                "samtools/SAMPLE_PAIRED_END_BAM_singleton.fq.gz",
                 "yara",
-                "yara/SAMPLE_PAIRED_END_BAM",
-                "yara/SAMPLE_PAIRED_END_BAM/SAMPLE_PAIRED_END_BAM_1.mapped.bam",
-                "yara/SAMPLE_PAIRED_END_BAM/SAMPLE_PAIRED_END_BAM_1.mapped.bam.bai",
-                "yara/SAMPLE_PAIRED_END_BAM/SAMPLE_PAIRED_END_BAM_2.mapped.bam",
-                "yara/SAMPLE_PAIRED_END_BAM/SAMPLE_PAIRED_END_BAM_2.mapped.bam.bai",
-                "yara/SAMPLE_PAIRED_END_BAM/versions.yml",
+                "yara/SAMPLE_PAIRED_END",
+                "yara/SAMPLE_PAIRED_END/SAMPLE_PAIRED_END_1.mapped.bam",
+                "yara/SAMPLE_PAIRED_END/SAMPLE_PAIRED_END_1.mapped.bam.bai",
+                "yara/SAMPLE_PAIRED_END/SAMPLE_PAIRED_END_2.mapped.bam",
+                "yara/SAMPLE_PAIRED_END/SAMPLE_PAIRED_END_2.mapped.bam.bai",
+                "yara/SAMPLE_PAIRED_END/versions.yml",
                 "yara/hla_reference_dna.fasta.lf.drp",
                 "yara/hla_reference_dna.fasta.lf.drs",
                 "yara/hla_reference_dna.fasta.lf.drv",
@@ -124,12 +110,6 @@
                 "yara/hla_reference_dna.fasta.txt.size"
             ],
             [
-                "example_pe.bam:md5,e6145c17fef62ea071238f8b0aca841c",
-                "is_singleend.txt:md5,d42f2da1df5ecdf29be4ac27edda0c12",
-                "SAMPLE_PAIRED_END_BAM_1.fq.gz:md5,361598a72f419e19c4de108267fa330c",
-                "SAMPLE_PAIRED_END_BAM_2.fq.gz:md5,45854c8203e7b26e0e2904c2f2dd6d3f",
-                "SAMPLE_PAIRED_END_BAM_other.fq.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
-                "SAMPLE_PAIRED_END_BAM_singleton.fq.gz:md5,fc978e9e59035f8f1739edf71c648796",
                 "versions.yml:md5,3d67d5a34bf0044c6567763154ac1719",
                 "hla_reference_dna.fasta.lf.drp:md5,28d863bdb814bccb8212a7b451e2af0a",
                 "hla_reference_dna.fasta.lf.drs:md5,8666683506aacd900bbd5a74ac4edf68",
@@ -149,6 +129,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2025-12-11T11:00:54.184222902"
+        "timestamp": "2026-01-30T13:28:12.89751644"
     }
 }
