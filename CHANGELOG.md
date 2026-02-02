@@ -3,6 +3,31 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.2.0 - Holocron - 2026-01-28
+
+### `Added`
+
+- [#201](https://github.com/nf-core/hlatyping/pull/201) - Option to run HLA-HD (v1.7.1) for Class I and Class II HLA typing (@riederd)
+- [#204](https://github.com/nf-core/hlatyping/pull/204) - CI tests for HLA-HD using encrypted licensed software, following nf-core external tool pattern (@jonasscheid)
+
+### `Changed`
+
+- [#202](https://github.com/nf-core/hlatyping/pull/202) - Merge nf-core template updates up to `3.5.1` (@jonasscheid)
+
+### `Fixed`
+
+- [#207](https://github.com/nf-core/hlatyping/pull/207) - Fix conda tests by updating Nextflow to 25.04.2 (@jonasscheid)
+- [#208](https://github.com/nf-core/hlatyping/pull/208) - Fix conda tests by pinning pytables<3.10 (@jonasscheid)
+
+### `Dependencies`
+
+| Dependency | Old version | New version |
+| ---------- | ----------- | ----------- |
+| `HLA-HD`   | -           | 1.7.1       |
+| `MultiQC`  | 1.27.0      | 1.33.0      |
+| `nf-core`  | 3.2.0       | 3.5.1       |
+| `Nextflow` | 24.04.2     | 25.04.2     |
+
 ## 2.1.0 - Patch Release - 2025-11-04
 
 ### `Added`

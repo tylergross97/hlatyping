@@ -13,6 +13,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 - [cat](#cat) - Merge FastQ files
 - [FastQC](#fastqc) - Raw read QC
 - [OptiType](#optitype) - HLA genotyping based on integer linear programming
+- [HLA-HD](#hlahd) - HLA Class I + II genotyping (optional, requires a local installation of HLA-HD)
 - [MultiQC](#multiqc) - Aggregate report describing results from the whole pipeline
 - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
 
@@ -56,6 +57,25 @@ The pipeline results contain a CSV file with the predicted HLA genotype. Each li
 Additionally, a coverage plot of the predicted HLA genotype is produced for quality control purposes (see below). The coverage plot shows the amount of reads that cover every position of the selected HLA allele sequence. Further, the color encoding denotes if reads are paired or unpaired, contain mismatches, and if the matches are unique or ambiguous. In case of homozygous solutions, the coverage plot of the corresponding HLA allele will be shown once.
 
 ![coverage_plot](images/sample_coverage_plot.png)
+
+### HLA-HD
+
+[HLA-HD](https://w3.genome.med.kyoto-u.ac.jp/HLA-HD/) (HLA typing from High-quality Dictionary) is an HLA genotyping algorithm that utilizes an extensive dictionary of HLA alleles and a unique mapping strategy. It calculates scores based on weighted read counts to select the most suitable allele pairs. Unlike many other tools, HLA-HD can provide accurate HLA genotyping predictions with up to 6-digit (3-field) precision from WGS, WES, and RNA-Seq data.
+For further reading and documentation see the [HLA-HD website](https://w3.genome.med.kyoto-u.ac.jp/HLA-HD/).
+
+> **Note:** HLA-HD is not distributed with the pipeline's containers due to licensing restrictions. The software is freely available for academic and non-commercial research purposes, but users must register and download it directly from the provider. Commercial use requires a specific license.
+
+The pipeline results contain a text file (`*_final.result.txt`) with the predicted HLA genotype. Each line represents a specific HLA gene locus and contains the best-matched allele pair in up to 6-digit nomenclature.
+
+```tsv
+A A*24:02:01:01 A*33:03:01
+B B*44:03:01  B*58:01:01:01
+C C*03:02:02:01 C*14:03
+DRB1  DRB1*04:05:01 DRB1*13:02:01
+DQB1  DQB1*04:01:01 DQB1*06:04:01
+DPB1  DPB1*04:01:01:01  DPB1*04:02:01:01
+...
+```
 
 **Output directory: `results/{timestamp}`**
 

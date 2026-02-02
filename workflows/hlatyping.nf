@@ -15,6 +15,8 @@
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 include { CHECK_PAIRED                } from '../modules/local/check_paired'
+include { HLAHD_INSTALL               } from '../modules/local/hlahd/install'
+include { HLAHD                       } from '../modules/local/hlahd/genotype'
 
 include { paramsSummaryMultiqc        } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -52,6 +54,8 @@ workflow HLATYPING {
     take:
     ch_samplesheet // channel: samplesheet read in from --input
     main:
+
+    def tools = params.tools ?: 'optitype'
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
@@ -108,12 +112,6 @@ workflow HLATYPING {
         .mix( ch_cat_fastq, ch_bam_fastq )
         .set{ ch_all_fastq }
 
-    ch_all_fastq
-        .map { meta, reads ->
-                [ meta, file("$projectDir/data/references/hla_reference_${meta['seq_type']}.fasta") ]
-        }
-        .set { ch_input_with_references }
-
     //
     // MODULE: Run FastQC
     //
@@ -123,59 +121,108 @@ workflow HLATYPING {
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
+    //
+    // Run modules for each selected tool
+    //
+    if ( "optitype" in tools.tokenize(",") ) {
 
-    //
-    // MODULE: Run Yara indexing on HLA reference
-    //
-    YARA_INDEX (
-        ch_input_with_references
-    )
-    ch_versions = ch_versions.mix(YARA_INDEX.out.versions)
+        ch_all_fastq
+            .map { meta, reads ->
+                    [ meta, file("$projectDir/data/references/hla_reference_${meta['seq_type']}.fasta") ]
+            }
+            .set { ch_input_with_references }
 
-
-    //
-    // Map sample-specific reads and index
-    //
-    ch_all_fastq
-        .cross(YARA_INDEX.out.index)
-        .multiMap { reads, index ->
-            reads: reads
-            index: index
-        }
-        .set { ch_mapping_input }
+        //
+        // MODULE: Run Yara indexing on HLA reference
+        //
+        YARA_INDEX (
+            ch_input_with_references
+        )
+        ch_versions = ch_versions.mix(YARA_INDEX.out.versions)
 
 
-    //
-    // MODULE: Run Yara mapping
-    //
-    // Preparation Step - Pre-mapping against HLA
-    //
-    // In order to avoid the internal usage of RazerS from within OptiType when
-    // the input files are of type `fastq`, we perform a pre-mapping step
-    // here with the `yara` mapper, and map against the HLA reference only.
-    //
-    YARA_MAPPER (
-        ch_mapping_input.reads,
-        ch_mapping_input.index
-    )
-    ch_versions = ch_versions.mix(YARA_MAPPER.out.versions)
+        //
+        // Map sample-specific reads and index
+        //
+        ch_all_fastq
+            .cross(YARA_INDEX.out.index)
+            .multiMap { reads, index ->
+                reads: reads
+                index: index
+            }
+            .set { ch_mapping_input }
 
 
-    //
-    // MODULE: OptiType
-    //
-    OPTITYPE (
-        YARA_MAPPER.out.bam.join(YARA_MAPPER.out.bai)
-    )
-    ch_multiqc_files = ch_multiqc_files.mix(OPTITYPE.out.hla_type.collect{it[1]})
-    ch_multiqc_files = ch_multiqc_files.mix(OPTITYPE.out.coverage_plot.collect{it[1]})
-    ch_versions      = ch_versions.mix(OPTITYPE.out.versions)
+        //
+        // MODULE: Run Yara mapping
+        //
+        // Preparation Step - Pre-mapping against HLA
+        //
+        // In order to avoid the internal usage of RazerS from within OptiType when
+        // the input files are of type `fastq`, we perform a pre-mapping step
+        // here with the `yara` mapper, and map against the HLA reference only.
+        //
+        YARA_MAPPER (
+            ch_mapping_input.reads,
+            ch_mapping_input.index
+        )
+        ch_versions = ch_versions.mix(YARA_MAPPER.out.versions)
 
+        //
+        // MODULE: OptiType
+        //
+        OPTITYPE (
+            YARA_MAPPER.out.bam.join(YARA_MAPPER.out.bai)
+        )
+
+        ch_multiqc_files = ch_multiqc_files.mix(OPTITYPE.out.hla_type.collect{it[1]})
+        ch_multiqc_files = ch_multiqc_files.mix(OPTITYPE.out.coverage_plot.collect{it[1]})
+        ch_versions      = ch_versions.mix(OPTITYPE.out.versions)
+    }
+
+    if ( "hlahd" in tools.tokenize(",") ) {
+        //
+        // MODULE: Run HLAHD typing
+        //
+        // Parse HLA-HD software metadata and create installation channel
+        def hlahd_software_meta = file("$projectDir/assets/hlahd_software_meta.json", checkIfExists: true)
+        def jsonSlurper = new groovy.json.JsonSlurper()
+        def hlahd_meta = jsonSlurper.parse(hlahd_software_meta)['hlahd']
+        def ch_hlahd_install = Channel.of([
+            'hlahd',
+            hlahd_meta.version,
+            hlahd_meta.software_md5,
+            file(params.hlahd_path, checkIfExists: true),
+            params.hlahd_update_reference_dict,
+        ])
+
+        HLAHD_INSTALL(ch_hlahd_install)
+        HLAHD(ch_all_fastq.combine(HLAHD_INSTALL.out.hlahd))
+        ch_versions = ch_versions.mix(HLAHD.out.versions)
+    }
 
     //
     // Collate and save software versions
     //
-    softwareVersionsToYAML(ch_versions)
+    def topic_versions = Channel.topic("versions")
+        .distinct()
+        .branch { entry ->
+            versions_file: entry instanceof Path
+            versions_tuple: true
+        }
+
+    def topic_versions_string = topic_versions.versions_tuple
+        .map { process, tool, version ->
+            [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
+        }
+        .groupTuple(by:0)
+        .map { process, tool_versions ->
+            tool_versions.unique().sort()
+            "${process}:\n${tool_versions.join('\n')}"
+        }
+
+    softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
+        .mix(topic_versions_string)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
             name: 'nf_core_'  +  'hlatyping_software_'  + 'mqc_'  + 'versions.yml',
@@ -187,24 +234,24 @@ workflow HLATYPING {
     //
     // MODULE: MultiQC
     //
-    ch_multiqc_config        = Channel.fromPath(
+    ch_multiqc_config        = channel.fromPath(
         "$projectDir/assets/multiqc_config.yml", checkIfExists: true)
     ch_multiqc_custom_config = params.multiqc_config ?
-        Channel.fromPath(params.multiqc_config, checkIfExists: true) :
-        Channel.empty()
+        channel.fromPath(params.multiqc_config, checkIfExists: true) :
+        channel.empty()
     ch_multiqc_logo          = params.multiqc_logo ?
-        Channel.fromPath(params.multiqc_logo, checkIfExists: true) :
-        Channel.empty()
+        channel.fromPath(params.multiqc_logo, checkIfExists: true) :
+        channel.empty()
 
     summary_params      = paramsSummaryMap(
         workflow, parameters_schema: "nextflow_schema.json")
-    ch_workflow_summary = Channel.value(paramsSummaryMultiqc(summary_params))
+    ch_workflow_summary = channel.value(paramsSummaryMultiqc(summary_params))
     ch_multiqc_files = ch_multiqc_files.mix(
         ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_custom_methods_description = params.multiqc_methods_description ?
         file(params.multiqc_methods_description, checkIfExists: true) :
         file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-    ch_methods_description                = Channel.value(
+    ch_methods_description                = channel.value(
         methodsDescriptionText(ch_multiqc_custom_methods_description))
 
     ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
