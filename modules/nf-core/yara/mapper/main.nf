@@ -42,16 +42,40 @@ process YARA_MAPPER {
         """
     } else {
         """
+        # Fusion 2.x uses /tmp/ as its NVMe disk cache layer and intercepts ALL I/O
+        # beneath that path — not only files explicitly staged under /fusion/s3/.
+        # SeqAn2's file_async.h (used by yara_mapper) creates anonymous O_TMPFILE
+        # descriptors in the process CWD or TMPDIR (both of which default to /tmp/).
+        # Fusion intercepts these fds and hits a SetAttr state-corruption bug:
+        #   resize(4, 256) failed: "No such file or directory" → SIGABRT (exit 134)
+        #
+        # Fix: stage inputs and redirect TMPDIR to /var/tmp/ (EBS root volume),
+        # which is outside Fusion's FUSE mount and has sufficient space for large
+        # FASTQ files. /dev/shm (RAM-backed) is also outside Fusion's scope but
+        # is typically too small for multi-GB FASTQ pairs.
+        LOCAL=\$(mktemp -d -p /var/tmp)
+        export TMPDIR=\${LOCAL}
+
+        cp ${reads[0]} \${LOCAL}/read1.fastq.gz
+        cp ${reads[1]} \${LOCAL}/read2.fastq.gz
+        cp ${index_prefix}.* \${LOCAL}/
+
+        cd \${LOCAL}
         yara_mapper \\
             $args \\
             -t $task.cpus \\
             -f bam \\
             ${index_prefix} \\
-            ${reads[0]} \\
-            ${reads[1]} > output.bam
+            read1.fastq.gz \\
+            read2.fastq.gz > output.bam
 
         samtools view -@ $task.cpus -hF 4 -f 0x40 -b output.bam | samtools sort -@ $task.cpus > ${prefix}_1.mapped.bam
         samtools view -@ $task.cpus -hF 4 -f 0x80 -b output.bam | samtools sort -@ $task.cpus > ${prefix}_2.mapped.bam
+
+        mv ${prefix}_1.mapped.bam ${prefix}_2.mapped.bam \${OLDPWD}/
+        cd \${OLDPWD}
+
+        rm -rf \${LOCAL}
 
         samtools index -@ $task.cpus ${prefix}_1.mapped.bam
         samtools index -@ $task.cpus ${prefix}_2.mapped.bam
