@@ -29,12 +29,17 @@ process YARA_MAPPER {
         # YARA creates temp files in the current directory which triggers Fusion bugs
         # when the work directory is S3-mounted. Solution: work entirely in local /tmp
         
-        mkdir -p /tmp/yara_work
-        cd /tmp/yara_work
+        # Get original working directory for output copying
+        ORIG_DIR=\$(pwd)
         
-        # Copy inputs to local storage
-        cp -L ${index_prefix}.* . || true
-        cp -L $reads reads_single.fq.gz
+        mkdir -p /tmp/yara_work
+        
+        # Copy inputs to local storage BEFORE changing directory
+        cp -L ${index_prefix}.* /tmp/yara_work/ || true
+        cp -L $reads /tmp/yara_work/reads_single.fq.gz
+        
+        # Now change to temp directory
+        cd /tmp/yara_work
         
         # Get the base name of the index for yara_mapper
         INDEX_BASE=\$(basename ${index_prefix})
@@ -55,8 +60,10 @@ process YARA_MAPPER {
             samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
         END_VERSIONS
         
-        # Copy outputs back to work directory (Nextflow will stage them automatically)
-        # No explicit copy needed - outputs are already in /tmp/yara_work which is our CWD
+        # Copy outputs back to work directory for Nextflow to publish
+        cp ${prefix}.mapped.bam \${ORIG_DIR}/
+        cp ${prefix}.mapped.bam.bai \${ORIG_DIR}/
+        cp versions.yml \${ORIG_DIR}/
         """
     } else {
         """
@@ -64,13 +71,18 @@ process YARA_MAPPER {
         # YARA creates temp files in the current directory which triggers Fusion bugs
         # when the work directory is S3-mounted. Solution: work entirely in local /tmp
         
-        mkdir -p /tmp/yara_work
-        cd /tmp/yara_work
+        # Get original working directory for output copying
+        ORIG_DIR=\$(pwd)
         
-        # Copy inputs to local storage
-        cp -L ${index_prefix}.* . || true
-        cp -L ${reads[0]} reads_R1.fq.gz
-        cp -L ${reads[1]} reads_R2.fq.gz
+        mkdir -p /tmp/yara_work
+        
+        # Copy inputs to local storage BEFORE changing directory
+        cp -L ${index_prefix}.* /tmp/yara_work/ || true
+        cp -L ${reads[0]} /tmp/yara_work/reads_R1.fq.gz
+        cp -L ${reads[1]} /tmp/yara_work/reads_R2.fq.gz
+        
+        # Now change to temp directory
+        cd /tmp/yara_work
         
         # Get the base name of the index for yara_mapper
         INDEX_BASE=\$(basename ${index_prefix})
@@ -97,8 +109,12 @@ process YARA_MAPPER {
             samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
         END_VERSIONS
         
-        # Copy outputs back to work directory (Nextflow will stage them automatically)
-        # No explicit copy needed - outputs are already in /tmp/yara_work which is our CWD
+        # Copy outputs back to work directory for Nextflow to publish
+        cp ${prefix}_1.mapped.bam \${ORIG_DIR}/
+        cp ${prefix}_1.mapped.bam.bai \${ORIG_DIR}/
+        cp ${prefix}_2.mapped.bam \${ORIG_DIR}/
+        cp ${prefix}_2.mapped.bam.bai \${ORIG_DIR}/
+        cp versions.yml \${ORIG_DIR}/
         """
     }
 
