@@ -42,16 +42,19 @@ process YARA_MAPPER {
         """
     } else {
         """
+        # Write intermediate BAM to local /tmp to avoid SeqAn async I/O incompatibility with Fusion
         yara_mapper \\
             $args \\
             -t $task.cpus \\
             -f bam \\
             ${index_prefix} \\
             ${reads[0]} \\
-            ${reads[1]} > output.bam
+            ${reads[1]} > /tmp/output.bam
 
-        samtools view -@ $task.cpus -hF 4 -f 0x40 -b output.bam | samtools sort -@ $task.cpus > ${prefix}_1.mapped.bam
-        samtools view -@ $task.cpus -hF 4 -f 0x80 -b output.bam | samtools sort -@ $task.cpus > ${prefix}_2.mapped.bam
+        samtools view -@ $task.cpus -hF 4 -f 0x40 -b /tmp/output.bam | samtools sort -@ $task.cpus > ${prefix}_1.mapped.bam
+        samtools view -@ $task.cpus -hF 4 -f 0x80 -b /tmp/output.bam | samtools sort -@ $task.cpus > ${prefix}_2.mapped.bam
+
+        rm -f /tmp/output.bam
 
         samtools index -@ $task.cpus ${prefix}_1.mapped.bam
         samtools index -@ $task.cpus ${prefix}_2.mapped.bam
