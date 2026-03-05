@@ -42,10 +42,6 @@ process YARA_MAPPER {
         """
     } else {
         """
-        # SeqAn file_async.h (used by yara_mapper) creates temp files relative to CWD via O_TMPFILE.
-        # Since CWD is a Fusion FUSE-mounted S3 path, this triggers a Fusion internal state
-        # corruption (SetAttr on .fusion/tmp entries). Fix: stage all I/O to a local tmpdir
-        # and cd there before running yara_mapper so its CWD is never on the Fusion mount.
         LOCAL=\$(mktemp -d)
         WORKDIR=\$(pwd)
 
@@ -53,7 +49,19 @@ process YARA_MAPPER {
         cp ${reads[1]} \${LOCAL}/read2.fastq.gz
         cp ${index_prefix}.* \${LOCAL}/
 
+        echo "=== DIAGNOSTICS ===" >&2
+        echo "CWD before cd: \$(pwd)" >&2
+        echo "LOCAL: \${LOCAL}" >&2
+        echo "TMPDIR: \${TMPDIR:-<unset>}" >&2
+        echo "Open FDs:" >&2
+        ls -la /proc/self/fd/ >&2 || true
+        echo "LOCAL contents:" >&2
+        ls -la \${LOCAL}/ >&2
+
         cd \${LOCAL}
+        echo "CWD after cd: \$(pwd)" >&2
+
+        export TMPDIR=\${LOCAL}
         yara_mapper \\
             $args \\
             -t $task.cpus \\
