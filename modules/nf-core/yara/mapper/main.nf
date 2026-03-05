@@ -42,19 +42,26 @@ process YARA_MAPPER {
         """
     } else {
         """
-        # Write intermediate BAM to local /tmp to avoid SeqAn async I/O incompatibility with Fusion
+        # Stage all yara inputs to local disk to avoid SeqAn async I/O incompatibility with Fusion.
+        # yara_mapper uses SeqAn file_async.h for both reading and writing, which triggers
+        # Fusion internal state corruption (SetAttr on .fusion/tmp entries) on FUSE-mounted paths.
+        LOCAL=\$(mktemp -d)
+        cp ${reads[0]} \${LOCAL}/read1.fastq.gz
+        cp ${reads[1]} \${LOCAL}/read2.fastq.gz
+        cp ${index_prefix}.* \${LOCAL}/
+
         yara_mapper \\
             $args \\
             -t $task.cpus \\
             -f bam \\
-            ${index_prefix} \\
-            ${reads[0]} \\
-            ${reads[1]} > /tmp/output.bam
+            \${LOCAL}/${index_prefix} \\
+            \${LOCAL}/read1.fastq.gz \\
+            \${LOCAL}/read2.fastq.gz > \${LOCAL}/output.bam
 
-        samtools view -@ $task.cpus -hF 4 -f 0x40 -b /tmp/output.bam | samtools sort -@ $task.cpus > ${prefix}_1.mapped.bam
-        samtools view -@ $task.cpus -hF 4 -f 0x80 -b /tmp/output.bam | samtools sort -@ $task.cpus > ${prefix}_2.mapped.bam
+        samtools view -@ $task.cpus -hF 4 -f 0x40 -b \${LOCAL}/output.bam | samtools sort -@ $task.cpus > ${prefix}_1.mapped.bam
+        samtools view -@ $task.cpus -hF 4 -f 0x80 -b \${LOCAL}/output.bam | samtools sort -@ $task.cpus > ${prefix}_2.mapped.bam
 
-        rm -f /tmp/output.bam
+        rm -rf \${LOCAL}
 
         samtools index -@ $task.cpus ${prefix}_1.mapped.bam
         samtools index -@ $task.cpus ${prefix}_2.mapped.bam
