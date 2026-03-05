@@ -27,6 +27,10 @@ process YARA_MAPPER {
         """
         # Ensure /tmp exists inside container for YARA
         mkdir -p /tmp
+        
+        # CRITICAL: Export TMPDIR to local instance storage to avoid Fusion staging issues
+        # YARA creates internal temp files that trigger Fusion bugs when in S3-backed work dir
+        export TMPDIR=/tmp
 
         yara_mapper \\
             $args \\
@@ -47,6 +51,10 @@ process YARA_MAPPER {
         """
         # Ensure /tmp exists inside container for YARA
         mkdir -p /tmp
+        
+        # CRITICAL: Export TMPDIR to local instance storage to avoid Fusion staging issues
+        # YARA creates internal temp files that trigger Fusion bugs when in S3-backed work dir
+        export TMPDIR=/tmp
 
         yara_mapper \\
             $args \\
