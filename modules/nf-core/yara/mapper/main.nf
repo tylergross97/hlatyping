@@ -44,8 +44,9 @@ process YARA_MAPPER {
         """
         # Fusion intercepts ALL I/O under /tmp/ (used as its NVMe cache layer).
         # SeqAn file_async.h creates temp files via TMPDIR which triggers a Fusion
-        # SetAttr state corruption bug. Use /dev/shm/ (RAM tmpfs, outside Fusion's reach).
-        LOCAL=\$(mktemp -d -p /dev/shm)
+        # SetAttr state corruption bug. Use /var/tmp/ (EBS root, outside Fusion's reach)
+        # instead of /dev/shm/ (RAM-backed, insufficient space for large FASTQ files).
+        LOCAL=\$(mktemp -d -p /var/tmp)
         export TMPDIR=\${LOCAL}
 
         cp ${reads[0]} \${LOCAL}/read1.fastq.gz
