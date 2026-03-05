@@ -42,21 +42,26 @@ process YARA_MAPPER {
         """
     } else {
         """
-        # Stage all yara inputs to local disk to avoid SeqAn async I/O incompatibility with Fusion.
-        # yara_mapper uses SeqAn file_async.h for both reading and writing, which triggers
-        # Fusion internal state corruption (SetAttr on .fusion/tmp entries) on FUSE-mounted paths.
+        # SeqAn file_async.h (used by yara_mapper) creates temp files relative to CWD via O_TMPFILE.
+        # Since CWD is a Fusion FUSE-mounted S3 path, this triggers a Fusion internal state
+        # corruption (SetAttr on .fusion/tmp entries). Fix: stage all I/O to a local tmpdir
+        # and cd there before running yara_mapper so its CWD is never on the Fusion mount.
         LOCAL=\$(mktemp -d)
+        WORKDIR=\$(pwd)
+
         cp ${reads[0]} \${LOCAL}/read1.fastq.gz
         cp ${reads[1]} \${LOCAL}/read2.fastq.gz
         cp ${index_prefix}.* \${LOCAL}/
 
+        cd \${LOCAL}
         yara_mapper \\
             $args \\
             -t $task.cpus \\
             -f bam \\
-            \${LOCAL}/${index_prefix} \\
-            \${LOCAL}/read1.fastq.gz \\
-            \${LOCAL}/read2.fastq.gz > \${LOCAL}/output.bam
+            ${index_prefix} \\
+            read1.fastq.gz \\
+            read2.fastq.gz > output.bam
+        cd \${WORKDIR}
 
         samtools view -@ $task.cpus -hF 4 -f 0x40 -b \${LOCAL}/output.bam | samtools sort -@ $task.cpus > ${prefix}_1.mapped.bam
         samtools view -@ $task.cpus -hF 4 -f 0x80 -b \${LOCAL}/output.bam | samtools sort -@ $task.cpus > ${prefix}_2.mapped.bam
