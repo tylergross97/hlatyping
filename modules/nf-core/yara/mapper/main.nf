@@ -2,10 +2,6 @@ process YARA_MAPPER {
     tag "$meta.id"
     label 'process_medium'
 
-    // Fix for Fusion scratch directory issue with YARA
-    // Force Fusion to use /tmp directly instead of .fusion/tmp
-    beforeScript 'export NXF_SCRATCH=/tmp'
-
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/mulled-v2-f13549097a0d1ca36f9d4f017636fb3609f6c083:de7982183b85634270540ac760c2644f16e0b6d1-0' :
@@ -29,6 +25,9 @@ process YARA_MAPPER {
     def index_prefix = index[0].baseName.substring(0,index[0].baseName.lastIndexOf('.'))
     if (meta.single_end) {
         """
+        # Ensure /tmp exists inside container for YARA
+        mkdir -p /tmp
+
         yara_mapper \\
             $args \\
             -t $task.cpus \\
@@ -46,6 +45,9 @@ process YARA_MAPPER {
         """
     } else {
         """
+        # Ensure /tmp exists inside container for YARA
+        mkdir -p /tmp
+
         yara_mapper \\
             $args \\
             -t $task.cpus \\
