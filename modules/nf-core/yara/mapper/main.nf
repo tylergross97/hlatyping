@@ -42,26 +42,17 @@ process YARA_MAPPER {
         """
     } else {
         """
-        LOCAL=\$(mktemp -d)
-        WORKDIR=\$(pwd)
+        # Fusion intercepts ALL I/O under /tmp/ (used as its NVMe cache layer).
+        # SeqAn file_async.h creates temp files via TMPDIR which triggers a Fusion
+        # SetAttr state corruption bug. Use /dev/shm/ (RAM tmpfs, outside Fusion's reach).
+        LOCAL=\$(mktemp -d -p /dev/shm)
+        export TMPDIR=\${LOCAL}
 
         cp ${reads[0]} \${LOCAL}/read1.fastq.gz
         cp ${reads[1]} \${LOCAL}/read2.fastq.gz
         cp ${index_prefix}.* \${LOCAL}/
 
-        echo "=== DIAGNOSTICS ===" >&2
-        echo "CWD before cd: \$(pwd)" >&2
-        echo "LOCAL: \${LOCAL}" >&2
-        echo "TMPDIR: \${TMPDIR:-<unset>}" >&2
-        echo "Open FDs:" >&2
-        ls -la /proc/self/fd/ >&2 || true
-        echo "LOCAL contents:" >&2
-        ls -la \${LOCAL}/ >&2
-
         cd \${LOCAL}
-        echo "CWD after cd: \$(pwd)" >&2
-
-        export TMPDIR=\${LOCAL}
         yara_mapper \\
             $args \\
             -t $task.cpus \\
@@ -69,10 +60,12 @@ process YARA_MAPPER {
             ${index_prefix} \\
             read1.fastq.gz \\
             read2.fastq.gz > output.bam
-        cd \${WORKDIR}
 
-        samtools view -@ $task.cpus -hF 4 -f 0x40 -b \${LOCAL}/output.bam | samtools sort -@ $task.cpus > ${prefix}_1.mapped.bam
-        samtools view -@ $task.cpus -hF 4 -f 0x80 -b \${LOCAL}/output.bam | samtools sort -@ $task.cpus > ${prefix}_2.mapped.bam
+        samtools view -@ $task.cpus -hF 4 -f 0x40 -b output.bam | samtools sort -@ $task.cpus > ${prefix}_1.mapped.bam
+        samtools view -@ $task.cpus -hF 4 -f 0x80 -b output.bam | samtools sort -@ $task.cpus > ${prefix}_2.mapped.bam
+
+        mv ${prefix}_1.mapped.bam ${prefix}_2.mapped.bam \${OLDPWD}/
+        cd \${OLDPWD}
 
         rm -rf \${LOCAL}
 
