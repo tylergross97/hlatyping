@@ -25,19 +25,27 @@ process YARA_MAPPER {
     def index_prefix = index[0].baseName.substring(0,index[0].baseName.lastIndexOf('.'))
     if (meta.single_end) {
         """
-        # Ensure /tmp exists inside container for YARA
-        mkdir -p /tmp
+        # CRITICAL FUSION WORKAROUND: Copy all inputs to /tmp and work there
+        # YARA creates temp files in the current directory which triggers Fusion bugs
+        # when the work directory is S3-mounted. Solution: work entirely in local /tmp
         
-        # CRITICAL: Export TMPDIR to local instance storage to avoid Fusion staging issues
-        # YARA creates internal temp files that trigger Fusion bugs when in S3-backed work dir
-        export TMPDIR=/tmp
-
+        mkdir -p /tmp/yara_work
+        cd /tmp/yara_work
+        
+        # Copy inputs to local storage
+        cp -L ${index_prefix}.* . || true
+        cp -L $reads reads_single.fq.gz
+        
+        # Get the base name of the index for yara_mapper
+        INDEX_BASE=\$(basename ${index_prefix})
+        
+        # Run YARA entirely in local /tmp directory
         yara_mapper \\
             $args \\
             -t $task.cpus \\
             -f bam \\
-            ${index_prefix} \\
-            $reads | samtools view -@ $task.cpus -hb -F4 | samtools sort -@ $task.cpus > ${prefix}.mapped.bam
+            \${INDEX_BASE} \\
+            reads_single.fq.gz | samtools view -@ $task.cpus -hb -F4 | samtools sort -@ $task.cpus > ${prefix}.mapped.bam
 
         samtools index -@ $task.cpus ${prefix}.mapped.bam
 
@@ -46,24 +54,37 @@ process YARA_MAPPER {
             yara: \$(echo \$(yara_mapper --version 2>&1) | sed 's/^.*yara_mapper version: //; s/ .*\$//')
             samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
         END_VERSIONS
+        
+        # Copy outputs back to work directory (Nextflow will stage them automatically)
+        # No explicit copy needed - outputs are already in /tmp/yara_work which is our CWD
         """
     } else {
         """
-        # Ensure /tmp exists inside container for YARA
-        mkdir -p /tmp
+        # CRITICAL FUSION WORKAROUND: Copy all inputs to /tmp and work there
+        # YARA creates temp files in the current directory which triggers Fusion bugs
+        # when the work directory is S3-mounted. Solution: work entirely in local /tmp
         
-        # CRITICAL: Export TMPDIR to local instance storage to avoid Fusion staging issues
-        # YARA creates internal temp files that trigger Fusion bugs when in S3-backed work dir
-        export TMPDIR=/tmp
-
+        mkdir -p /tmp/yara_work
+        cd /tmp/yara_work
+        
+        # Copy inputs to local storage
+        cp -L ${index_prefix}.* . || true
+        cp -L ${reads[0]} reads_R1.fq.gz
+        cp -L ${reads[1]} reads_R2.fq.gz
+        
+        # Get the base name of the index for yara_mapper
+        INDEX_BASE=\$(basename ${index_prefix})
+        
+        # Run YARA entirely in local /tmp directory
         yara_mapper \\
             $args \\
             -t $task.cpus \\
             -f bam \\
-            ${index_prefix} \\
-            ${reads[0]} \\
-            ${reads[1]} > output.bam
+            \${INDEX_BASE} \\
+            reads_R1.fq.gz \\
+            reads_R2.fq.gz > output.bam
 
+        # Process BAM files
         samtools view -@ $task.cpus -hF 4 -f 0x40 -b output.bam | samtools sort -@ $task.cpus > ${prefix}_1.mapped.bam
         samtools view -@ $task.cpus -hF 4 -f 0x80 -b output.bam | samtools sort -@ $task.cpus > ${prefix}_2.mapped.bam
 
@@ -75,6 +96,9 @@ process YARA_MAPPER {
             yara: \$(echo \$(yara_mapper --version 2>&1) | sed 's/^.*yara_mapper version: //; s/ .*\$//')
             samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
         END_VERSIONS
+        
+        # Copy outputs back to work directory (Nextflow will stage them automatically)
+        # No explicit copy needed - outputs are already in /tmp/yara_work which is our CWD
         """
     }
 
